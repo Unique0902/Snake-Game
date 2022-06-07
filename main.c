@@ -29,6 +29,10 @@ typedef struct _snake {
 	int direction;
 }Snake;
 
+typedef struct _apple {
+	Loc loc;
+}Apple;
+
 
 void ClearLindeFromReadBuffer();
 void decorateConsole();
@@ -133,7 +137,7 @@ void snakeInit(Snake* snake) {
 
 void printSnake(Snake* snake) {
 	int i;
-	gotoxyPrintStr((snake->body)[0].xpos, (snake->body)[0].ypos, "ぞ");
+	gotoxyPrintStr((snake->body)[0].xpos, (snake->body)[0].ypos, "け");
 	for (i = 1; i < snake->length; i++) {
 		gotoxyPrintStr((snake->body)[i].xpos, (snake->body)[i].ypos, "し");
 	}
@@ -144,6 +148,23 @@ void clearSnake(Snake* snake) {
 	for (i = 1; i < snake->length; i++) {
 		gotoxyPrintStr((snake->body)[i].xpos, (snake->body)[i].ypos, "  ");
 	}
+}
+
+void makeRandomApple(Apple* apple, Snake* snake) {
+	int i, breakFlag = 1;
+	srand(time(0));
+	while (1) {
+		breakFlag = 1;
+		apple->loc.xpos = rand() % (MAP_LENG - 1) + 1;
+		apple->loc.ypos = rand() % (MAP_HEIGHT - 1) + 2;
+		for (i = 0; i < snake->length; i++) {
+			if (apple->loc.xpos == (snake->body)[i].xpos && apple->loc.ypos == (snake->body)[i].ypos)
+				breakFlag = 0;
+		}
+		if (breakFlag)
+			break;
+	}
+	gotoxyPrintStr(apple->loc.xpos, apple->loc.ypos, "ぞ");
 }
 
 int isGameOver(Snake* snake) {
@@ -159,6 +180,12 @@ int isGameOver(Snake* snake) {
 			return TRUE;
 		}
 	}
+	return FALSE;
+}
+
+int isEatApple(Snake* snake, Apple* apple) {
+	if ((snake->body)[0].xpos == apple->loc.xpos && (snake->body)[0].ypos == apple->loc.ypos)
+		return TRUE;
 	return FALSE;
 }
 
@@ -205,7 +232,7 @@ void moveSnake(Snake* snake) {
 	}
 	printSnake(snake);
 }
-void moveSnakeInTime(Snake* snake) {
+void moveSnakeInTime(Snake* snake, Apple* apple) {
 	int inputKey;
 	int breakFlag = 0;
 	clock_t start = clock();
@@ -258,6 +285,10 @@ void moveSnakeInTime(Snake* snake) {
 				if (isGameOver(snake)) {
 					break;
 				}
+				if (isEatApple(snake, apple)) {
+					makeRandomApple(apple, snake);
+					snake->length++;
+				}
 			}
 		}
 		if ((clock() - start) > SNAKE_MOVE_SECOND) {
@@ -266,17 +297,23 @@ void moveSnakeInTime(Snake* snake) {
 			if (isGameOver(snake)) {
 				break;
 			}
+			if (isEatApple(snake, apple)) {
+				makeRandomApple(apple, snake);
+				snake->length++;
+			}
 		}
 	}
 }
 
 void startGame() {
 	Snake snake;
+	Apple apple;
 	clearScreen();
 	snakeInit(&snake);
 	printMap();
+	makeRandomApple(&apple, &snake);
 	printSnake(&snake);
-	moveSnakeInTime(&snake);
+	moveSnakeInTime(&snake, &apple);
 	return;
 }
 
