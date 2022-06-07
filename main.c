@@ -10,6 +10,9 @@
 # define MAP_HEIGHT 30
 # define SNAKE_MOVE_SECOND 300
 
+#define TRUE 1
+#define FALSE 0
+
 #define RIGHT 1
 #define LEFT 2
 #define UP 3
@@ -85,18 +88,18 @@ void printMap() {
 	int i, j;
 	printf("\n");
 	printf(" ");
-	for (i = 0; i < MAP_LENG*2; i++)
+	for (i = 0; i < MAP_LENG * 2; i++)
 		printf("=");
 	for (i = 0; i < MAP_HEIGHT - 2; i++) {
 		printf("\n");
 		printf("¤À");
-		for (j = 0; j < MAP_LENG*2; j++)
+		for (j = 0; j < MAP_LENG * 2; j++)
 			printf(" ");
 		printf("¤À");
 	}
 	printf("\n");
 	printf(" ");
-	for (i = 0; i < MAP_LENG*2; i++)
+	for (i = 0; i < MAP_LENG * 2; i++)
 		printf("=");
 	printf("\n");
 }
@@ -124,7 +127,7 @@ void snakeInit(Snake* snake) {
 	snake->direction = RIGHT;
 	(snake->body)[0].xpos = MAP_LENG / 2;
 	(snake->body)[0].ypos = MAP_HEIGHT / 2;
-	(snake->body)[1].xpos = MAP_LENG / 2-1;
+	(snake->body)[1].xpos = MAP_LENG / 2 - 1;
 	(snake->body)[1].ypos = MAP_HEIGHT / 2;
 }
 
@@ -142,10 +145,27 @@ void clearSnake(Snake* snake) {
 		gotoxyPrintStr((snake->body)[i].xpos, (snake->body)[i].ypos, "  ");
 	}
 }
+
+int isGameOver(Snake* snake) {
+	int i;
+	if ((snake->body)[0].xpos < 1 || (snake->body)[0].xpos > MAP_LENG) {
+		return TRUE;
+	}
+	if ((snake->body)[0].ypos < 1 || (snake->body)[0].ypos >= MAP_HEIGHT) {
+		return TRUE;
+	}
+	for (i = 1; i < snake->length; i++) {
+		if ((snake->body)[0].xpos == (snake->body)[i].xpos && (snake->body)[0].ypos == (snake->body)[i].ypos) {
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
 void moveSnake(Snake* snake) {
 	Loc temp = (snake->body)[0];
 	Loc temp2;
-	Loc memoryTail = (snake->body)[snake->length-1];
+	Loc memoryTail = (snake->body)[snake->length - 1];
 	int i;
 	clearSnake(snake);
 	switch (snake->direction)
@@ -235,12 +255,18 @@ void moveSnakeInTime(Snake* snake) {
 				if (breakFlag == 0) {
 					start = clock();
 				}
+				if (isGameOver(snake)) {
+					break;
+				}
 			}
 		}
 		if ((clock() - start) > SNAKE_MOVE_SECOND) {
 			moveSnake(snake);
 			start = clock();
-		}	
+			if (isGameOver(snake)) {
+				break;
+			}
+		}
 	}
 }
 
