@@ -5,9 +5,9 @@
 #include<conio.h>
 #include <stdlib.h>
 
-# define SNAKE_SPEED1 800
-# define SNAKE_SPEED2 400
-# define SNAKE_SPEED3 200
+# define SNAKE_SPEED1 400
+# define SNAKE_SPEED2 200
+# define SNAKE_SPEED3 150
 # define SNAKE_SPEED4 100
 # define SNAKE_SPEED5 50
 
@@ -46,6 +46,8 @@ void gotoxy(int x, int y);
 void removeConsoleCursor();
 void printGameOver(Snake* snake);
 void startGame();
+void printSpeedPick();
+void pickSpeed();
 
 int snake_speed = 0;
 int best_score = 0;
@@ -368,9 +370,10 @@ void printGameOver(Snake* snake) {
 		printf("당신의 뱀 길이: %d (최고 기록: %d)", snake->length, best_score);
 	}
 	gotoxyPrintStr(MAP_LENG / 2 - 1, MAP_HEIGHT / 2, "1. 다시 시작");
-	gotoxyPrintStr(MAP_LENG / 2 - 1, MAP_HEIGHT / 2 + 1, "2. 끝내기");
-	gotoxyPrintStr(MAP_LENG / 2 - 2, MAP_HEIGHT / 2 + 2, "(1, 2 중 선택)");
-	gotoxyPrintStr(MAP_LENG / 2 - 2, MAP_HEIGHT / 2 + 3, "-------------");
+	gotoxyPrintStr(MAP_LENG / 2 - 1, MAP_HEIGHT / 2 + 1, "2. 난이도 재선택");
+	gotoxyPrintStr(MAP_LENG / 2 - 1, MAP_HEIGHT / 2 + 2, "3. 끝내기");
+	gotoxyPrintStr(MAP_LENG / 2 - 2, MAP_HEIGHT / 2 + 3, "(1, 2, 3 중 선택)");
+	gotoxyPrintStr(MAP_LENG / 2 - 2, MAP_HEIGHT / 2 + 4, "-------------");
 }
 
 void pickGameOverMenu() {
@@ -383,6 +386,11 @@ void pickGameOverMenu() {
 			startGame();
 			return;
 		case '2':
+			printSpeedPick();
+			pickSpeed();
+			startGame();
+			return;
+		case '3':
 			return;
 		}
 	}
