@@ -5,11 +5,11 @@
 #include<conio.h>
 #include <stdlib.h>
 
-# define SNAKE_SPEED1 100
-# define SNAKE_SPEED2 300
-# define SNAKE_SPEED3 700
-# define SNAKE_SPEED4 1500
-# define SNAKE_SPEED5 3000
+# define SNAKE_SPEED1 800
+# define SNAKE_SPEED2 400
+# define SNAKE_SPEED3 200
+# define SNAKE_SPEED4 100
+# define SNAKE_SPEED5 50
 
 # define LIFE 10
 # define MAP_LENG 30
@@ -44,6 +44,11 @@ void decorateConsole();
 int makeRandomNum();
 void gotoxy(int x, int y);
 void removeConsoleCursor();
+void printGameOver(Snake* snake);
+void startGame();
+
+int snake_speed = 0;
+int best_score = 0;
 
 void removeConsoleCursor() {
 	CONSOLE_CURSOR_INFO cursorInfo = { 0, };
@@ -59,7 +64,7 @@ void clearScreen() {
 	system("cls");
 }
 void decorateConsole() {
-	system("mode con cols=100 lines=40 | title 뱀게임");
+	system("mode con cols=90 lines=35 | title 뱀게임");
 }
 
 int makeRandomNum() {
@@ -119,6 +124,7 @@ Loc ReturnPresentCurLoc() {
 	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &presentCur);
 	present.xpos = presentCur.dwCursorPosition.X;
 	present.ypos = presentCur.dwCursorPosition.Y;
+	return present;
 }
 
 void gotoxyPrintStr(int x, int y, char* str) {
@@ -142,10 +148,10 @@ void snakeInit(Snake* snake) {
 
 void printSnake(Snake* snake) {
 	int i;
-	gotoxyPrintStr((snake->body)[0].xpos, (snake->body)[0].ypos, "ㅁ");
 	for (i = 1; i < snake->length; i++) {
 		gotoxyPrintStr((snake->body)[i].xpos, (snake->body)[i].ypos, "ㅇ");
 	}
+	gotoxyPrintStr((snake->body)[0].xpos, (snake->body)[0].ypos, "ㅁ");
 }
 void clearSnake(Snake* snake) {
 	int i;
@@ -166,7 +172,7 @@ void makeRandomApple(Apple* apple, Snake* snake) {
 	while (1) {
 		breakFlag = 1;
 		apple->loc.xpos = rand() % (MAP_LENG - 1) + 1;
-		apple->loc.ypos = rand() % (MAP_HEIGHT - 1) + 2;
+		apple->loc.ypos = rand() % (MAP_HEIGHT - 2) + 2;
 		for (i = 0; i < snake->length; i++) {
 			if (apple->loc.xpos == (snake->body)[i].xpos && apple->loc.ypos == (snake->body)[i].ypos)
 				breakFlag = 0;
@@ -182,7 +188,7 @@ int isGameOver(Snake* snake) {
 	if ((snake->body)[0].xpos < 1 || (snake->body)[0].xpos > MAP_LENG) {
 		return TRUE;
 	}
-	if ((snake->body)[0].ypos < 1 || (snake->body)[0].ypos >= MAP_HEIGHT) {
+	if ((snake->body)[0].ypos < 2 || (snake->body)[0].ypos >= MAP_HEIGHT) {
 		return TRUE;
 	}
 	for (i = 1; i < snake->length; i++) {
@@ -302,9 +308,9 @@ void moveSnakeInTime(Snake* snake, Apple* apple) {
 					start = clock();
 				}
 				if (isGameOver(snake)) {
-					gotoxyPrintStr(MAP_LENG / 2, MAP_HEIGHT / 2, "GAME OVER (아무키나 입력)");
-					_getch();
-					break;
+					gotoxyPrintStr(apple->loc.xpos, apple->loc.ypos, " ");
+					printGameOver(snake);
+					return;
 				}
 				if (isEatApple(snake, apple)) {
 					// 먹자마자 길이 늘어나게 하기
@@ -317,7 +323,7 @@ void moveSnakeInTime(Snake* snake, Apple* apple) {
 				}
 			}
 		}
-		if ((clock() - start) > SNAKE_SPEED2) {
+		if ((clock() - start) > snake_speed) {
 			// 먹자마자 길이 늘어나게 하기
 			if (memoryCleanFlag) {
 				gotoxyPrintStr(memoryTail.xpos, memoryTail.ypos, "  ");
@@ -328,9 +334,9 @@ void moveSnakeInTime(Snake* snake, Apple* apple) {
 			moveSnake(snake);
 			start = clock();
 			if (isGameOver(snake)) {
-				gotoxyPrintStr(MAP_LENG / 2, MAP_HEIGHT / 2, "GAME OVER (아무키나 입력)");
-				_getch();
-				break;
+				gotoxyPrintStr(apple->loc.xpos, apple->loc.ypos, "  ");
+				printGameOver(snake);
+				return;
 			}
 			if (isEatApple(snake, apple)) {
 				// 먹자마자 길이 늘어나게 하기
@@ -341,6 +347,78 @@ void moveSnakeInTime(Snake* snake, Apple* apple) {
 				snake->length++;
 				printScore(snake);
 			}
+		}
+	}
+}
+int isBestScore(Snake* snake) {
+	if (snake->length > best_score) {
+		best_score = snake->length;
+		return TRUE;
+	}
+	return FALSE;
+}
+void printGameOver(Snake* snake) {
+	gotoxyPrintStr(MAP_LENG / 2 - 2, MAP_HEIGHT / 2 - 3, "-------------");
+	gotoxyPrintStr(MAP_LENG / 2 - 1, MAP_HEIGHT / 2-2, "GAME OVER");
+	gotoxy(MAP_LENG / 2 - 3, MAP_HEIGHT / 2 - 1);
+	if (isBestScore(snake)) {
+		printf("최고 뱀 길이 %d 달성!!", snake->length);
+	}
+	else {
+		printf("당신의 뱀 길이: %d (최고 기록: %d)", snake->length, best_score);
+	}
+	gotoxyPrintStr(MAP_LENG / 2 - 1, MAP_HEIGHT / 2, "1. 다시 시작");
+	gotoxyPrintStr(MAP_LENG / 2 - 1, MAP_HEIGHT / 2 + 1, "2. 끝내기");
+	gotoxyPrintStr(MAP_LENG / 2 - 2, MAP_HEIGHT / 2 + 2, "(1, 2 중 선택)");
+	gotoxyPrintStr(MAP_LENG / 2 - 2, MAP_HEIGHT / 2 + 3, "-------------");
+}
+
+void pickGameOverMenu() {
+	char input;
+	while (1) {
+		input = _getch();
+		switch (input)
+		{
+		case '1':
+			startGame();
+			return;
+		case '2':
+			return;
+		}
+	}
+}
+void printSpeedPick() {
+	clearScreen();
+	printf("난이도 선택\n\n");
+	printf("1. 매우 쉬움\n");
+	printf("2. 쉬움\n");
+	printf("3. 보통\n");
+	printf("4. 어려움\n");
+	printf("5. 매우 어려움\n");
+	printf("(1 ~ 5 중 선택하시오.)\n");
+}
+void pickSpeed() {
+	char input;
+	int speed;
+	while (1) {
+		input = _getch();
+		switch (input)
+		{
+		case '1':
+			snake_speed = SNAKE_SPEED1;
+			return;
+		case '2':
+			snake_speed = SNAKE_SPEED2;
+			return;
+		case '3':
+			snake_speed = SNAKE_SPEED3;
+			return;
+		case '4':
+			snake_speed = SNAKE_SPEED4;
+			return;
+		case '5':
+			snake_speed = SNAKE_SPEED5;
+			return;
 		}
 	}
 }
@@ -355,13 +433,14 @@ void startGame() {
 	printSnake(&snake);
 	printScore(&snake);
 	moveSnakeInTime(&snake, &apple);
+	pickGameOverMenu();
 	return;
 }
 
 void showHowGame() {
 	clearScreen();
 	printf("\n\n");
-	printf("벽과 자신의 몸에 부딪히지 않고 사과를 먹으며 몸의 길이를 늘려나가세요.\n\n");
+	printf("벽과 자신의 몸에 부딪히지 않고 사과를 먹으며 뱀의 길이를 늘려나가세요!\n\n");
 	printf("사과는 랜덤하게 스폰됩니다.");
 	return;
 }
@@ -374,6 +453,8 @@ void pickMenu() {
 		switch (input)
 		{
 		case '1':
+			printSpeedPick();
+			pickSpeed();
 			startGame();
 			return;
 		case '2':
